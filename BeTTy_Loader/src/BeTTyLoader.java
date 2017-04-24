@@ -27,8 +27,8 @@ public class BeTTyLoader implements Loader {
 
 				for (int n = 0; n < 10;) {
 					GeneratorCharacteristics characteristics = new GeneratorCharacteristics();
-					characteristics.setNumberOfFeatures(5);
-					characteristics.setPercentageCTC(100);
+					characteristics.setNumberOfFeatures(nf);
+					characteristics.setPercentageCTC(nc);
 
 					AbstractFMGenerator generator = new FMGenerator();
 					FAMAFeatureModel fm = (FAMAFeatureModel) generator.generateFM(characteristics);
