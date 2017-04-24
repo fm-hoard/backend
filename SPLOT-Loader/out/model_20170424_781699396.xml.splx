@@ -1,0 +1,98 @@
+<!-- This model was created online using SPLOT's Feature Model Editor (http://www.splot-research.org) on Mon, Apr 24, 2017 - 2:11 PM  -->
+<feature_model name="SubseaControlSystem">
+<meta>
+<data name="description">subseaCS</data>
+<data name="creator">adeng</data>
+<data name="address"></data>
+<data name="email">85134548@qq.com</data>
+<data name="phone"></data>
+<data name="website"></data>
+<data name="organization">Beihang University</data>
+<data name="department"></data>
+<data name="date"></data>
+<data name="reference"></data>
+</meta>
+<feature_tree>
+:r SubseaCS(_r)
+	:m maxPressure(_r_23)
+	:o HIPPS(_r_29)
+	:m ProductionSystem(_r_30)
+		:g (_r_30_35) [1,*] 
+			: SubseaField(_r_30_35_36)
+		:m productionSystemType(_r_30_77)
+			:g (_r_30_77_78) [1,1] 
+				: RateMaxShutinPress(_r_30_77_78_79)
+				: WithPressRestriction(_r_30_77_78_80)
+				: WithPressProtection(_r_30_77_78_81)
+	:m systemType(_r_48)
+		:g (_r_48_49) [1,1] 
+			: AllHydraulic(_r_48_49_50)
+				:m detailedType(_r_48_49_50_53)
+					:g (_r_48_49_50_53_54) [1,1] 
+						: DirectHydraulic(_r_48_49_50_53_54_55)
+						: PilotedHydraulic(_r_48_49_50_53_54_56)
+						: SequentialHydrualic(_r_48_49_50_53_54_57)
+			: ElectroHydraulic(_r_48_49_51)
+				:m detailedType(_r_48_49_51_58)
+					:g (_r_48_49_51_58_59) [1,1] 
+						: DirectElectroHydraulic(_r_48_49_51_58_59_60)
+						: MultipleElectroHydraulic(_r_48_49_51_58_59_61)
+						: Autonomous(_r_48_49_51_58_59_62)
+			: AllElectric(_r_48_49_52)
+				:m detailedType(_r_48_49_52_68)
+					:g (_r_48_49_52_68_69) [1,1] 
+						: DirectElectric(_r_48_49_52_68_69_70)
+						: MultipleElectric(_r_48_49_52_68_69_71)
+						: AutonomousElectric(_r_48_49_52_68_69_72)
+	:m signalType(_r_73)
+		:g (_r_73_74) [1,1] 
+			: HydraulicSignal(_r_73_74_75)
+			: ElectricSignal(_r_73_74_76)
+	:m MCS(_r_82)
+	:m ControlModule(_r_99)
+		:m SEM(_r_99_100)
+			:m shockLevel(_r_99_100_107)
+				:g (_r_99_100_107_108) [1,1] 
+					: Q1(_r_99_100_107_108_109)
+					: Q2(_r_99_100_107_108_110)
+			:m IdentificationType(_r_99_100_111)
+				:g (_r_99_100_111_112) [1,1] 
+					: Tag(_r_99_100_111_112_113)
+					: NamePlate(_r_99_100_111_112_114)
+					: ImprintedId(_r_99_100_111_112_115)
+			:m Sensor(_r_99_100_130)
+				:m type(_r_99_100_130_133)
+					:g (_r_99_100_130_133_134) [1,1] 
+						: DownholeMonitor(_r_99_100_130_133_134_135)
+						: TemperatureTransducer(_r_99_100_130_133_134_136)
+						: SubseaFlowMeter(_r_99_100_130_133_134_137)
+						: PositionSensor(_r_99_100_130_133_134_138)
+						: SandDetector(_r_99_100_130_133_134_139)
+						: ErosionProbs(_r_99_100_130_133_134_141)
+		:m SEMApp(_r_99_116)
+			:m DeviceController(_r_99_116_117)
+				:m operationMode(_r_99_116_117_118)
+					:g (_r_99_116_117_118_119) [1,1] 
+						: Normal(_r_99_116_117_118_119_120)
+						: Maintenance(_r_99_116_117_118_119_121)
+			:m SensorController(_r_99_116_122)
+				:m type(_r_99_116_122_124)
+					:g (_r_99_116_122_124_125) [1,1] 
+						: DownholeMonitorController(_r_99_116_122_124_125_126)
+						: TemperatureTransducerController(_r_99_116_122_124_125_127)
+						: SubseaFlowMeterController(_r_99_116_122_124_125_128)
+						: PositionSensorController(_r_99_116_122_124_125_129)
+						: SandDetectorController(_r_99_116_122_124_125_140)
+						: ErosionProbsController(_r_99_116_122_124_125_142)
+</feature_tree>
+<constraints>
+constraint_8:~_r_99_100_130_133_134_139 or _r_99_116_122_124_125_140
+constraint_10:_r_99_116_122_124_125_128 or ~_r_99_100_130_133_134_137
+constraint_9:_r_99_116_122_124_125_129 or ~_r_99_100_130_133_134_138
+constraint_11:_r_99_116_122_124_125_127 or ~_r_99_100_130_133_134_136
+constraint_6:~_r_48_49_52 or _r_73_74_76
+constraint_12:_r_99_116_122_124_125_126 or ~_r_99_100_130_133_134_135
+constraint_7:~_r_99_100_130_133_134_141 or _r_99_116_122_124_125_142
+constraint_5:~_r_48_49_50 or _r_73_74_75
+</constraints>
+</feature_model>
