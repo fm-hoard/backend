@@ -13,13 +13,14 @@ public class DebianLoader implements Loader {
 	public Collection<File> loadFiles() {
 		// TODO Auto-generated method stub
 		String[] repos= {"main","multiverse","restricted","universe"};
-		String server = "";
+		String server = "archive.ubuntu.com/ubuntu/dists/";
 		FTPClient client = new FTPClient();
 		try {
-			client.connect(server);
+			client.connect(server,22);
+			
 			FTPFile[] listFiles = client.listDirectories();
 			for (FTPFile f: listFiles){
-				
+				System.out.println(f.getName());
 			}
 			
 		} catch (IOException e) {

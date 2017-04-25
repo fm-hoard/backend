@@ -43,8 +43,8 @@ public class BeTTyLoader implements Loader {
 
 						FMWriter writer = new FMWriter();
 						try {
-							writer.saveFM(fm, "./out/model-" + nf + "-" + nc + ".xml");
-							result.add(new File("./out/model-" + nf + "-" + nc + ".xml"));
+							writer.saveFM(fm, "./out/model-" + nf + "-" + nc + "-" + n + ".xml");
+							result.add(new File("./out/model-" + nf + "-" + nc + "-" + n + ".xml"));
 						} catch (Exception e) {
 
 							e.printStackTrace();
