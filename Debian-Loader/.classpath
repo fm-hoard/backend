@@ -17,5 +17,10 @@
 		</attributes>
 	</classpathentry>
 	<classpathentry combineaccessrules="false" kind="src" path="/CORE-Loader"/>
+	<classpathentry kind="lib" path="lib/debianvm.jar"/>
+	<classpathentry kind="lib" path="lib/famadeb.jar"/>
+	<classpathentry kind="lib" path="lib/famadebsdk.jar"/>
+	<classpathentry kind="lib" path="lib/FaMaFeatureModel-0.9.1.jar"/>
+	<classpathentry kind="lib" path="lib/FaMaSDK-1.1.1.jar"/>
 	<classpathentry kind="output" path="target/classes"/>
 </classpath>

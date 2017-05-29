@@ -1,0 +1,268 @@
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+
+import es.us.isa.FAMA.models.DebianVariabilityModel.BreaksRelation;
+import es.us.isa.FAMA.models.DebianVariabilityModel.ConflictsRelation;
+import es.us.isa.FAMA.models.DebianVariabilityModel.DEBpackage;
+import es.us.isa.FAMA.models.DebianVariabilityModel.DebianVariabilityModel;
+import es.us.isa.FAMA.models.DebianVariabilityModel.DependsRalation;
+import es.us.isa.FAMA.models.DebianVariabilityModel.ProvidesRelation;
+import es.us.isa.FAMA.models.DebianVariabilityModel.RecommendsRelation;
+import es.us.isa.FAMA.models.DebianVariabilityModel.Relation;
+import es.us.isa.FAMA.models.DebianVariabilityModel.ReplacesRelation;
+import es.us.isa.FAMA.models.DebianVariabilityModel.SuggestsRelation;
+import es.us.isa.FAMA.models.DebianVariabilityModel.preDependsRelation;
+import es.us.isa.FAMA.models.DebianVariabilityModel.fileformats.PackagesGzReader;
+import es.us.isa.FAMA.models.OVM.FAMAOVModel;
+import es.us.isa.FAMA.models.OVM.fileformats.OVMWriter;
+import es.us.isa.FAMA.models.OVM.standardElements.ExcludesDependency;
+import es.us.isa.FAMA.models.OVM.standardElements.OptionalVariationPoint;
+import es.us.isa.FAMA.models.OVM.standardElements.RequiresDependency;
+import es.us.isa.FAMA.models.OVM.standardElements.Variant;
+import es.us.isa.FAMA.models.OVM.standardElements.VariationPoint;
+import es.us.isa.FAMA.models.featureModel.Cardinality;
+
+public class DEB2OVM {
+
+	static Collection<DEBpackage> processed = new ArrayList<DEBpackage>();
+	static Map<DEBpackage, Collection<DEBpackage>> replaces = new HashMap<DEBpackage, Collection<DEBpackage>>();
+	static Map<VariationPoint, VariationPoint> excludesRel = new HashMap<VariationPoint, VariationPoint>();
+
+	static FAMAOVModel res = new FAMAOVModel();
+
+	public static void main(String[] args) throws Exception {
+		Collection<String> paths = new ArrayList<String>();
+
+		paths.add("./inputs/main80403");
+//		paths.add("./inputs/restricted80403");
+//		paths.add("./inputs/multiverse80403");
+//	    paths.add("./inputs/universe80403");
+		PackagesGzReader read = new PackagesGzReader(paths);
+		DebianVariabilityModel dvm = (DebianVariabilityModel) read.parseFile();
+		for (DEBpackage pkg : dvm.getElements()) {
+			for (Relation rel : pkg.getRelations()) {
+				if (rel instanceof ReplacesRelation) {
+					for (DEBpackage child : rel.getChilds()) {
+						if (replaces.containsKey(child)) {
+							Collection<DEBpackage> col = replaces.get(child);
+							col.add(pkg);
+							replaces.put(child, col);
+						} else {
+							Collection<DEBpackage> col = new ArrayList<DEBpackage>();
+							col.add(pkg);
+							replaces.put(child, col);
+						}
+					}
+				}
+			}
+		}
+		transform(dvm);
+		generateRequires(dvm);
+		for (VariationPoint p : excludesRel.keySet()) {
+			ExcludesDependency dep = new ExcludesDependency("", p, excludesRel
+					.get(p));
+			res.addDependency(dep);
+		}
+		OVMWriter writer = new OVMWriter();
+		writer.writeFile("./main.ovm", res);
+	}
+
+	private static void generateRequires(DebianVariabilityModel dvm) {
+		Collection<Variant> processed = new ArrayList<Variant>();
+
+		for (VariationPoint p : res.getVpoints()) {
+			for (VariationPoint p2 : res.getVpoints()) {
+				for (es.us.isa.FAMA.models.OVM.Relation rel : p2.getRel()) {
+					for (Variant v : rel.getVariants()) {
+						// Es el mismo nombre acabado en p
+						if (p.getName().contains(v.getName())) {
+							if (!processed.contains(v)) {
+								RequiresDependency dep = new RequiresDependency(
+										"", v, p);
+								res.addDependency(dep);
+								processed.add(v);
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	public static void transform(DebianVariabilityModel dvm) {
+
+		// Every package will be map to a VP
+		for (DEBpackage pkg : dvm.getElements()) {
+			if (!processed.contains(pkg)&&(getNoRelWOReplaces(pkg) > 1)) {
+
+				processDEB(pkg);
+			}
+		}
+
+	}
+
+	public static int getNoRelWOReplaces(DEBpackage pkg) {
+		int i = 0;
+
+		for (Relation rel : pkg.getRelations()) {
+			if (!(rel instanceof ReplacesRelation || rel instanceof ProvidesRelation)) {
+				i++;
+			}
+
+		}
+		return i;
+	}
+
+	public static void processDEB(DEBpackage pkg) {
+
+		if (!processed.contains(pkg)) {
+			processed.add(pkg);
+			String ovmName = pkg.getName() + "(" + pkg.getVersion().toString()
+					+ ")_VP";
+			VariationPoint vp = new OptionalVariationPoint(ovmName);
+
+			for (Relation rel : pkg.getRelations()) {
+				Collection<DEBpackage> childs = rel.getChilds();
+
+				// we will map this to a mandatory relationship
+				if (rel instanceof DependsRalation) {
+					es.us.isa.FAMA.models.OVM.Relation ovmRel = new es.us.isa.FAMA.models.OVM.Relation(
+							"");
+
+					ovmRel.setCard(new Cardinality(1, 1));
+
+					for (DEBpackage deb : childs) {
+						Variant v = new Variant(deb.getName() + "("
+								+ deb.getVersion().toString() + ")_V");
+						ovmRel.addChild(v);
+
+						// the package has a replacement/s add those as
+						// alternatives
+
+						if (replaces.containsKey(deb)) {
+							for (DEBpackage rd : replaces.get(deb)) {
+								Variant vr = new Variant(rd.getName() + "("
+										+ rd.getVersion().toString() + ")_V");
+								ovmRel.addChild(vr);
+							}
+						}
+						if (getNoRelWOReplaces(deb) > 1) {
+							processDEB(deb);
+						}
+					}
+					vp.addRel(ovmRel);
+
+					// we can map this to a mandatory/requires relationship
+				} else if (rel instanceof preDependsRelation) {
+					es.us.isa.FAMA.models.OVM.Relation ovmRel = new es.us.isa.FAMA.models.OVM.Relation(
+							"");
+
+					ovmRel.setCard(new Cardinality(1, 1));
+
+					for (DEBpackage deb : childs) {
+						Variant v = new Variant(deb.getName() + "("
+								+ deb.getVersion().toString() + ")_V");
+						ovmRel.addChild(v);
+
+						// the package has a replacement/s add those as
+						// alternatices
+
+						if (replaces.containsKey(deb)) {
+							for (DEBpackage rd : replaces.get(deb)) {
+								Variant vr = new Variant(rd.getName() + "("
+										+ rd.getVersion().toString() + ")_V");
+								ovmRel.addChild(vr);
+							}
+						}
+
+						if (getNoRelWOReplaces(deb) > 1) {
+							processDEB(deb);
+						}
+					}
+					vp.addRel(ovmRel);
+
+				} else if (rel instanceof ConflictsRelation) {
+					/**
+					 * Should Depend on the VP (requires and excludes are at vp
+					 * level)but if we do that its imposible to manage with
+					 * replacements
+					 */
+
+					for (DEBpackage deb : childs) {
+						String ovmNameDst = deb.getName() + "("
+								+ deb.getVersion().toString() + ")_VP";
+						VariationPoint vp2 = new OptionalVariationPoint(
+								ovmNameDst);
+						excludesRel.put(vp, vp2);
+						if (getNoRelWOReplaces(deb) > 1) {
+							processDEB(deb);
+						}
+					}
+					// we will map this to a optional relationship
+				} else if (rel instanceof RecommendsRelation) {
+					es.us.isa.FAMA.models.OVM.Relation ovmRel = new es.us.isa.FAMA.models.OVM.Relation(
+							"");
+
+					ovmRel.setCard(new Cardinality(0, 1));
+
+					for (DEBpackage deb : childs) {
+						Variant v = new Variant(deb.getName() + "("
+								+ deb.getVersion().toString() + ")_V");
+						ovmRel.addChild(v);
+						if (getNoRelWOReplaces(deb) > 1) {
+							processDEB(deb);
+						}
+					}
+					vp.addRel(ovmRel);
+
+					// we will map this to a optional relationship
+				} else if (rel instanceof SuggestsRelation) {
+					es.us.isa.FAMA.models.OVM.Relation ovmRel = new es.us.isa.FAMA.models.OVM.Relation(
+							"");
+
+					ovmRel.setCard(new Cardinality(0, 1));
+					for (DEBpackage deb : childs) {
+						Variant v = new Variant(deb.getName() + "("
+								+ deb.getVersion().toString() + ")_V");
+						ovmRel.addChild(v);
+						if (getNoRelWOReplaces(deb) > 1) {
+							processDEB(deb);
+						}
+					}
+					vp.addRel(ovmRel);
+
+					// we will map this to a __________ relationship
+				} else if (rel instanceof ProvidesRelation) {
+
+					// we will map this to a excludes relationship
+				} else if (rel instanceof BreaksRelation) {
+
+					/**
+					 * Should Depend on the VP (requires and excludes are at vp
+					 * level)but if we do that its imposible to manage with
+					 * replacements
+					 */
+
+					for (DEBpackage deb : childs) {
+						String ovmNameDst = deb.getName() + "("
+								+ deb.getVersion().toString() + ")_VP";
+						VariationPoint vp2 = new OptionalVariationPoint(
+								ovmNameDst);
+						excludesRel.put(vp, vp2);
+						if (getNoRelWOReplaces(deb) > 1) {
+							processDEB(deb);
+						}
+					}
+					// we will map this to a excludes relationship
+				}
+
+			}
+
+			res.addVariationPoint(vp);
+
+		}
+	}
+}

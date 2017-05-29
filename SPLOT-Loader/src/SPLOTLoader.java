@@ -21,6 +21,8 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
+import es.us.isa.FAMA.models.FAMAfeatureModel.fileformats.SPLXReader;
+import es.us.isa.FAMA.models.FAMAfeatureModel.fileformats.XMLWriter;
 import main.Loader;
 import net.htmlparser.jericho.Element;
 import net.htmlparser.jericho.HTMLElementName;
@@ -128,6 +130,10 @@ public class SPLOTLoader implements Loader{
 		// cierre de conexion y fichero.
 		is.close();
 		fos.close();
+		
+		SPLXReader reader = new SPLXReader();
+		XMLWriter writer = new XMLWriter();
+		writer.writeFile("./splot/"+href, reader.parseFile("./out/"+href+".splx"));
 		return file;
 	}
 

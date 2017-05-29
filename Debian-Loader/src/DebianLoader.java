@@ -4,6 +4,7 @@ import java.util.Collection;
 
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPFile;
+import org.apache.commons.net.ftp.FTPSClient;
 
 import main.Loader;
 
@@ -13,13 +14,14 @@ public class DebianLoader implements Loader {
 	public Collection<File> loadFiles() {
 		// TODO Auto-generated method stub
 		String[] repos= {"main","multiverse","restricted","universe"};
-		String server = "archive.ubuntu.com/ubuntu/dists/";
+		String server = "archive.ubuntu.com";//
 		FTPClient client = new FTPClient();
 		try {
-			client.connect(server,22);
+			client.connect(server,21);
+			client.login("","");
+			FTPFile[] listDirectories = client.listDirectories("/ubuntu/dists/");
 			
-			FTPFile[] listFiles = client.listDirectories();
-			for (FTPFile f: listFiles){
+			for (FTPFile f: listDirectories){
 				System.out.println(f.getName());
 			}
 			
