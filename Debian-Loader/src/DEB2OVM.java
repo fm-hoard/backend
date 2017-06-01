@@ -2,6 +2,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -22,12 +23,13 @@ import es.us.isa.FAMA.models.FAMAfeatureModel.ExcludesDependency;
 import es.us.isa.FAMA.models.FAMAfeatureModel.FAMAFeatureModel;
 import es.us.isa.FAMA.models.FAMAfeatureModel.Feature;
 import es.us.isa.FAMA.models.FAMAfeatureModel.RequiresDependency;
+import es.us.isa.FAMA.models.FAMAfeatureModel.fileformats.GraphVizWriter;
 import es.us.isa.FAMA.models.FAMAfeatureModel.fileformats.XMLWriter;
 import es.us.isa.FAMA.models.featureModel.Cardinality;
 
 public class DEB2OVM {
 
-	static Collection<DEBpackage> processed = new ArrayList<DEBpackage>();
+	static Collection<DEBpackage> processed = new LinkedList<DEBpackage>();
 	static Map<DEBpackage, Collection<DEBpackage>> replaces = new HashMap<DEBpackage, Collection<DEBpackage>>();
 	static Map<Feature, Feature> excludesRel = new HashMap<Feature, Feature>();
 
@@ -61,6 +63,7 @@ public class DEB2OVM {
 		}
 		transform(dvm);
 		generateExcludes(dvm);
+
 
 		XMLWriter writer = new XMLWriter();
 		writer.writeFile("./text.xml", fm);
@@ -96,7 +99,7 @@ public class DEB2OVM {
 	}
 
 	private static void createOptional(Feature parent, Feature child) {
-		es.us.isa.FAMA.models.FAMAfeatureModel.Relation rel = new es.us.isa.FAMA.models.FAMAfeatureModel.Relation();
+		es.us.isa.FAMA.models.FAMAfeatureModel.Relation rel = new es.us.isa.FAMA.models.FAMAfeatureModel.Relation("");
 		rel.addCardinality(new Cardinality(0, 1));
 		rel.addDestination(child);
 		rel.setParent(parent);
@@ -104,7 +107,7 @@ public class DEB2OVM {
 	}
 
 	private static void createMandatory(Feature parent, Feature child) {
-		es.us.isa.FAMA.models.FAMAfeatureModel.Relation rel = new es.us.isa.FAMA.models.FAMAfeatureModel.Relation();
+		es.us.isa.FAMA.models.FAMAfeatureModel.Relation rel = new es.us.isa.FAMA.models.FAMAfeatureModel.Relation("");
 		rel.addCardinality(new Cardinality(1, 1));
 		rel.addDestination(child);
 		rel.setParent(parent);
@@ -133,7 +136,8 @@ public class DEB2OVM {
 		for (DEBpackage pkg : dvm.getElements()) {
 			// create a fake root and link all packages with it
 			// if not processed
-			if (fm.searchFeatureByName(pkg.getName() + "(" + pkg.getVersion().toString() + ")") == null) {
+			if (!processed.contains(pkg)) {
+				processed.add(pkg);
 				Feature child = getFeature(pkg.getName() + "(" + pkg.getVersion().toString() + ")");
 				createOptional(root, child);
 				processDEB(pkg, child);
@@ -143,7 +147,10 @@ public class DEB2OVM {
 	}
 
 	public static void processDEB(DEBpackage pkg, Feature feat) {
-		if (null == fm.searchFeatureByName(pkg.getName() + "(" + pkg.getVersion().toString() + ")")) {
+		
+		if (!processed.contains(pkg)) {
+			processed.add(pkg);
+		//	System.out.println("Processing: " + pkg.getName() + "(" + pkg.getVersion().toString() + ")");
 			for (Relation rel : pkg.getRelations()) {
 				Collection<DEBpackage> childs = rel.getChilds();
 
