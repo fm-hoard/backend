@@ -20,7 +20,7 @@
 	<classpathentry kind="lib" path="lib/debianvm.jar"/>
 	<classpathentry kind="lib" path="lib/famadeb.jar"/>
 	<classpathentry kind="lib" path="lib/famadebsdk.jar"/>
-	<classpathentry kind="lib" path="lib/FaMaFeatureModel-0.9.1.jar"/>
+	<classpathentry kind="lib" path="lib/FaMaFeatureModel-0.9.1.jar" sourcepath="C:/Users/malawito/Documents/Repositorios/FaMA"/>
 	<classpathentry kind="lib" path="lib/FaMaSDK-1.1.1.jar"/>
 	<classpathentry kind="lib" path="lib/parserDEB-0.0.1.jar"/>
 	<classpathentry kind="output" path="target/classes"/>
